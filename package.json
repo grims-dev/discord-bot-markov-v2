@@ -1,0 +1,37 @@
+{
+  "name": "discord-bot-template",
+  "version": "1.0.0",
+  "description": "Skeleton repo for getting started with a Typescript Discord bot",
+  "main": "index.ts",
+  "scripts": {
+    "build": "rimraf ./build && tsc",
+    "command:delete:global": "npm run build && DEPLOY_OR_DELETE=DELETE GLOBAL_OR_GUILD=GLOBAL node build/requests/deploy-commands.js",
+    "command:delete:guild": "npm run build && DEPLOY_OR_DELETE=DELETE GLOBAL_OR_GUILD=GUILD node build/requests/deploy-commands.js",
+    "command:deploy:global": "npm run build && DEPLOY_OR_DELETE=DEPLOY GLOBAL_OR_GUILD=GLOBAL node build/requests/deploy-commands.js",
+    "command:deploy:guild": "npm run build && node DEPLOY_OR_DELETE=DEPLOY GLOBAL_OR_GUILD=GUILD build/requests/deploy-commands.js",
+    "start": "npm run build && node build/index.js",
+    "start:dev": "npx nodemon",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/grims-dev/discord-bot-template.git"
+  },
+  "author": "grims-dev",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/grims-dev/discord-bot-template/issues"
+  },
+  "homepage": "https://github.com/grims-dev/discord-bot-template#readme",
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "rimraf": "^5.0.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "@types/node": "^20.4.6",
+    "discord.js": "^14.12.1",
+    "dotenv": "^16.3.1"
+  }
+}
