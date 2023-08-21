@@ -64,6 +64,8 @@ export class MarkovGeneratorModel {
      * @returns string - generated text
      */
     generate(searchTerm: string = ''): string {
+        if (!this.ngramMap.size) return '(This instance has no data - please use the `feed` method)';
+
         const output: string[] = [];
         let currentNgram: string = '';
 
