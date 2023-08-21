@@ -3,10 +3,12 @@ import path from 'node:path';
 import { Collection, RESTPostAPIChatInputApplicationCommandsJSONBody } from 'discord.js';
 import { ICommand, IEvent } from '../types';
 
+const baseDir = __dirname.replace('/utils', '');
+
 // for storing commands within the bot
 const getCommands = (): Collection<string, ICommand> => {
     const commands = new Collection<string, ICommand>();
-    const foldersPath = path.join(__dirname, 'commands');
+    const foldersPath = path.join(baseDir, 'commands');
     const commandFolders = fs.readdirSync(foldersPath);
 
     for (const folder of commandFolders) {
@@ -27,7 +29,7 @@ export const commands = getCommands();
 // for collecting as array of JSON payloads for uploading to Discord API
 const getCommandsJSON = (): RESTPostAPIChatInputApplicationCommandsJSONBody[] => {
     const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
-    const foldersPath = path.join(__dirname, 'commands');
+    const foldersPath = path.join(baseDir, 'commands');
     const commandFolders = fs.readdirSync(foldersPath);
 
     for (const folder of commandFolders) {
@@ -47,7 +49,7 @@ export const commandsJSON = getCommandsJSON();
 
 const getEvents = (): IEvent[] => {
     const events: IEvent[] = [];
-    const eventsPath = path.join(__dirname, 'events');
+    const eventsPath = path.join(baseDir, 'events');
     const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.ts'));
 
     eventFiles.forEach(file => {
