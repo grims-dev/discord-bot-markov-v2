@@ -11,7 +11,7 @@ const init = () => {
         return;
     }
 
-    const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+    const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
     events.forEach(event => {
         event.once
