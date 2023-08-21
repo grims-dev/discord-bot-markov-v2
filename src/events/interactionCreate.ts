@@ -4,7 +4,6 @@ import { commands } from '../utils/discord';
 
 const event: IEvent = {
     name: Events.InteractionCreate,
-    once: true,
     execute: async (interaction: BaseInteraction) => {
         if (!interaction.isChatInputCommand()) return;
         const command = commands.get(interaction.commandName);
