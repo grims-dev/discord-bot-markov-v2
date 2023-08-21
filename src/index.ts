@@ -1,6 +1,11 @@
 import 'dotenv/config';
+import fs from 'node:fs';
 import { Client, GatewayIntentBits } from 'discord.js';
 import { events } from './utils/discord';
+import { MarkovGeneratorModel } from './models/markov';
+import { LOG_FILE_PATH } from './utils/constants';
+
+export const markov = new MarkovGeneratorModel(2, 50, false);
 
 const init = () => {
     console.log('Initialising the bot...');
@@ -20,6 +25,13 @@ const init = () => {
     });
 
     client.login(token);
+
+    fs.readFileSync(LOG_FILE_PATH)
+        .toString()
+        .split('\n')
+        .forEach(line => !!line && markov.feed(line.trim()));
+
+    console.log('Initialisation complete');
 };
 
 init();
