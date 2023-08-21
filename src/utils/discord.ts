@@ -4,6 +4,7 @@ import { Collection, RESTPostAPIChatInputApplicationCommandsJSONBody } from 'dis
 import { ICommand, IEvent } from '../types';
 
 const baseDir = __dirname.replace('/utils', '');
+const getFiles = (file: string) => file.endsWith('.ts') || file.endsWith('.js');
 
 // for storing commands within the bot
 const getCommands = (): Collection<string, ICommand> => {
@@ -13,7 +14,7 @@ const getCommands = (): Collection<string, ICommand> => {
 
     for (const folder of commandFolders) {
         const commandsPath = path.join(foldersPath, folder);
-        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts'));
+        const commandFiles = fs.readdirSync(commandsPath).filter(getFiles);
 
         for (const file of commandFiles) {
             const filePath = path.join(commandsPath, file);
@@ -34,7 +35,7 @@ const getCommandsJSON = (): RESTPostAPIChatInputApplicationCommandsJSONBody[] =>
 
     for (const folder of commandFolders) {
         const commandsPath = path.join(foldersPath, folder);
-        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+        const commandFiles = fs.readdirSync(commandsPath).filter(getFiles);
 
         for (const file of commandFiles) {
             const filePath = path.join(commandsPath, file);
@@ -50,7 +51,7 @@ export const commandsJSON = getCommandsJSON();
 const getEvents = (): IEvent[] => {
     const events: IEvent[] = [];
     const eventsPath = path.join(baseDir, 'events');
-    const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.ts'));
+    const eventFiles = fs.readdirSync(eventsPath).filter(getFiles);
 
     eventFiles.forEach(file => {
         const filePath = path.join(eventsPath, file);
