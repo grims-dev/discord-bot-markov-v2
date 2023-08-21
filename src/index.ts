@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import fs from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { Client, GatewayIntentBits } from 'discord.js';
 import { events } from './utils/discord';
 import { MarkovGeneratorModel } from './models/markov';
@@ -16,9 +16,14 @@ const init = () => {
         return;
     }
 
+    if (!events.length) {
+        console.error('No events were found');
+        return;
+    }
+
     const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
-    events?.forEach(event => {
+    events.forEach(event => {
         event.once
             ? client.once(event.name, (...args: any[]) => event.execute(...args))
             : client.on(event.name, (...args: any[]) => event.execute(...args));
@@ -26,7 +31,7 @@ const init = () => {
 
     client.login(token);
 
-    fs.readFileSync(LOG_FILE_PATH)
+    readFileSync(LOG_FILE_PATH)
         .toString()
         .split('\n')
         .forEach(line => !!line && markov.feed(line.trim()));

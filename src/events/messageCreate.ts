@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import fs from 'node:fs';
+import { appendFile } from 'node:fs';
 import { Message, MessageCreateOptions, Events } from 'discord.js';
 import { IEvent } from '../types';
 import { markov } from '..';
@@ -27,7 +27,6 @@ const event: IEvent = {
     name: Events.MessageCreate,
     execute: async (message: Message) => {
         // handle manual command
-        console.log(message);
         if (message.content.startsWith(botCommand)) {
             await message.channel.send({
                 ...messageOptions,
@@ -46,7 +45,7 @@ const event: IEvent = {
             .replace(matchWhitespace, ' ');
 
         if (cleanMessage.split(' ').length >= 2) {
-            fs.appendFile(LOG_FILE_PATH, '\n' + cleanMessage, (err) => { if (err) console.error(err); });
+            appendFile(LOG_FILE_PATH, '\n' + cleanMessage, (err) => { if (err) console.error(err); });
             markov.feed(cleanMessage);
         }
 
