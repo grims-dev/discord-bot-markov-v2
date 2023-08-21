@@ -18,7 +18,7 @@ const init = () => {
 
     const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
-    events.forEach(event => {
+    events?.forEach(event => {
         event.once
             ? client.once(event.name, (...args: any[]) => event.execute(...args))
             : client.on(event.name, (...args: any[]) => event.execute(...args));
