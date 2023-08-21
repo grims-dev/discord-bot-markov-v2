@@ -5,7 +5,7 @@ import { markov } from '../../index';
 const command: ICommand = {
 	data: new SlashCommandBuilder()
 		.setName('speak')
-		.setDescription('')
+		.setDescription('Let me speak!')
 		.setDMPermission(false),
 		// .addStringOption(option =>
 		// 	option.setName('Search term')
@@ -14,7 +14,7 @@ const command: ICommand = {
 		// 	option.setName('Enable strict search')
 		// ),
 	async execute(interaction: CommandInteraction) {
-		await interaction.reply('Pong!');
+		await interaction.reply(markov.generate());
 	},
 };
 
