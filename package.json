@@ -1,7 +1,7 @@
 {
-  "name": "discord-bot-template",
+  "name": "discord-bot-markov-v2",
   "version": "1.0.0",
-  "description": "Skeleton repo for getting started with a Typescript Discord bot",
+  "description": "Typescript rewrite of a Markov Discord bot",
   "main": "index.ts",
   "scripts": {
     "build": "rimraf ./build && tsc",
