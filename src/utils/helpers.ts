@@ -19,9 +19,45 @@ export const clean = (input: string): string => {
 /**
  * Selects a random item from an array
  * @param choices - array of strings to choose from
- * @returns the chosen one
+ * @returns the chosen item
  */
 export const randomChoice = (choices: string[]): string => choices[Math.floor(Math.random() * choices.length)];
+
+/**
+ * Selects a random item from a Map
+ * @param map - map to choose from
+ * @returns the chosen item
+ */
+export const randomChoiceFromMap = <T>(map: Map<string, T>): T => {
+    let index = 0;
+    let chosenKey = '';
+    const indexToChoose = Math.floor(Math.random() * map.size);
+    for (const key of map.keys()) {
+        if (index++ === indexToChoose) {
+            chosenKey = key;
+            break;
+        }
+    }
+    return map.get(chosenKey)!;
+}
+
+/**
+ * Selects a random key from a Map
+ * @param map - map to choose from
+ * @returns the chosen key
+ */
+export const randomKeyFromMap = <T>(map: Map<string, T>): string => {
+    let index = 0;
+    let chosenKey = '';
+    const indexToChoose = Math.floor(Math.random() * map.size);
+    for (const key of map.keys()) {
+        if (index++ === indexToChoose) {
+            chosenKey = key;
+            break;
+        }
+    }
+    return chosenKey;
+}
 
 /**
  * Retrieves a section of items from the end of an array

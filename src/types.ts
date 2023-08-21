@@ -11,3 +11,7 @@ export interface IEvent {
     execute(...args: any): any;
     once?: boolean;
 }
+
+export type NgramVariations = string[];
+export type NgramData = Map<string, NgramVariations>;
+export type NgramMap = Map<string, NgramData>;

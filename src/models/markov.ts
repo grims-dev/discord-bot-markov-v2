@@ -1,4 +1,6 @@
-import { tokenize, clean, randomChoice, getNLastItems, getNthWord, removeArrayItemIfPresent } from '../utils/helpers';
+import { tokenize, clean, randomChoice, getNLastItems, randomChoiceFromMap, randomKeyFromMap } from '../utils/helpers';
+import { DISCORD_MAX_MESSAGE_LENGTH } from '../utils/constants';
+import { NgramData, NgramMap } from '../types';
 
 export class MarkovGeneratorModel {
     /**
@@ -12,16 +14,21 @@ export class MarkovGeneratorModel {
     /**
      * @param ngramMap - Dictionary storage of ngrams; each ngram is the key, an array of possible next strings are the values
      */
-    readonly ngramMap: Map<string, string[]>;
+    readonly ngramMap: NgramMap;
+    /**
+     * @param isStrictMarkov - Determines strictness of adherence to Markov model (enables weighted options)
+     */
+    readonly isStrictMarkov: boolean;
 
-    constructor(n = 2, maxWordCount = 50) {
+    constructor(n = 2, maxWordCount = 50, isStrictMarkov = false) {
         this.n = n;
         this.maxWordCount = maxWordCount;
         this.ngramMap = new Map();
+        this.isStrictMarkov = isStrictMarkov;
     }
 
     /**
-     * Feed in new text to the Markov chain
+     * Feed in new text to the ngram storage to be generated from
      * @param input - new string to feed
      * @returns void
      */
@@ -32,18 +39,21 @@ export class MarkovGeneratorModel {
         const numberOfNgrams = inputTokens.length - this.n;
         for (let i = 0; i < numberOfNgrams; i++) {
             const ngram = inputTokens.slice(i, i + this.n).join(' ');
-
-            // initialise if doesn't exist
-            if (!this.ngramMap.get(ngram)) {
-                this.ngramMap.set(ngram, []);
-            }
-
-            // now we can safely grab as array, and
-            // retrieve next word to add to the list
-            const currentNgramValue = this.ngramMap.get(ngram)!;
+            const cleanNgram = clean(ngram);
             const nextWord = inputTokens[i + this.n];
-            if (!currentNgramValue.includes(nextWord)) {
-                currentNgramValue.push(nextWord);
+
+            const ngramVariations =
+                this.ngramMap.get(cleanNgram) ??
+                this.ngramMap.set(cleanNgram, new Map()).get(cleanNgram)!;
+
+            const currentNgramVariation =
+                ngramVariations.get(ngram) ??
+                ngramVariations.set(ngram, []).get(ngram)!;
+
+            if (this.isStrictMarkov) {
+                currentNgramVariation.push(nextWord);
+            } else if (!currentNgramVariation.includes(nextWord)) {
+                currentNgramVariation.push(nextWord);
             }
         }
     }
@@ -51,79 +61,70 @@ export class MarkovGeneratorModel {
     /**
      * Generate text from the information ngrams
      * @param searchTerm - term to search for
-     * @param isStrict - adhere to original punctuation or not
      * @returns string - generated text
      */
-    generate(searchTerm: string = '', isStrict: boolean = false): string {
-        const ngramValues: string[] = [...this.ngramMap.keys()];
+    generate(searchTerm: string = ''): string {
         const output: string[] = [];
         let currentNgram: string = '';
 
         // handle search
-        const trimmedSearchTerm = searchTerm.trim();
-        if (trimmedSearchTerm.length) {
-            console.log(`ciaran — generate — trimmedSearchTerm::`, trimmedSearchTerm);
-            const searchTokens: string[] = (
-                isStrict
-                    ? tokenize(trimmedSearchTerm)
-                    : tokenize(clean(trimmedSearchTerm))
-            ).splice(this.maxWordCount);
+        const trimSearchTerm = searchTerm.trim();
+        if (trimSearchTerm) {
+            const searchTokens = tokenize(trimSearchTerm);
 
-            for (let i = 0; i < searchTokens.length - this.n; i++) {
-                const isFirstRun: boolean = i === 0;
-                const searchNgram: string = searchTokens.slice(i, i + this.n).join(' ');
-
-                const searchResultsSimilar: string[] = ngramValues.filter(ngram => (isStrict ? ngram : clean(ngram)).startsWith(searchNgram));
-
-                if (!searchResultsSimilar && !isFirstRun) break;
-
-                // on first run, try first word
-                if (isFirstRun) {
-                    searchResultsSimilar.push(...ngramValues.filter(ngram =>
-                        getNthWord((isStrict ? ngram : clean(ngram)), 1)
-                            .startsWith(getNthWord(searchNgram, 1))
-                    ));
-                    if (!searchResultsSimilar) break;
+            for (let i = 0; i < Math.min(searchTokens.length, this.maxWordCount); i++) {
+                const isFirstRun = i === 0;
+                const searchNgram = searchTokens.slice(i, i + this.n).join(' ');
+                const cleanSearchNgram = clean(searchNgram);
+                let searchedNgramData: NgramData | undefined = this.ngramMap.get(cleanSearchNgram);
+                if (!searchedNgramData) {
+                    if (isFirstRun) {
+                        // try to find matching first word ngrams
+                        const firstWord = tokenize(cleanSearchNgram)[0];
+                        let matchingFirstWordKeys = [];
+                        for (const key of this.ngramMap.keys()) {
+                            if (key.split(' ')[0] === firstWord) matchingFirstWordKeys.push(key);
+                        }
+                        if (!matchingFirstWordKeys.length) break;
+                        searchedNgramData = this.ngramMap.get(randomChoice(matchingFirstWordKeys));
+                    }
                 }
+                if (!searchedNgramData) break;
 
-                const searchResultsExact: string[] = [];
-                if (searchResultsSimilar) {
-                    searchResultsExact.push(...searchResultsSimilar.filter(ngram => ngram === searchNgram));
-                }
-
-                const searchResultTokens = tokenize(randomChoice(searchResultsExact || searchResultsSimilar));
-                if (isFirstRun) output.push(searchResultTokens[0]);
-                output.push(searchResultTokens[1]);
+                const [firstWord, ...restOfWords] = tokenize(randomKeyFromMap(searchedNgramData));
+                if (isFirstRun) output.push(firstWord);
+                output.push(...restOfWords);
             }
+        }
+
+        if (output.length) {
+            currentNgram = getNLastItems(output, this.n);
         } else {
-            currentNgram = randomChoice(ngramValues);
-            output.push(currentNgram);
+            // no search/search results - grab random start
+            currentNgram = randomKeyFromMap(randomChoiceFromMap(this.ngramMap));
+            output.push(...tokenize(currentNgram));
         }
 
         // handle remainder of generation
+        const dupeNgramStorage: Set<string> = new Set();
         const remainingWordCount = this.maxWordCount - output.length;
         for (let i = 0; i < remainingWordCount; i++) {
+            // prevent duplicate/repeats
+            if (dupeNgramStorage.has(currentNgram)) break;
+            dupeNgramStorage.add(currentNgram);
+
+            // index the ngram storage based on current ngram
             const currentNgramClean: string = clean(currentNgram);
-            const resultsSimilar: string[] = ngramValues.filter(ngram => clean(ngram).startsWith(currentNgramClean));
-            const resultsExact: string[] = [];
-            if (resultsSimilar) {
-                resultsExact.push(...resultsSimilar.filter(ngram => clean(ngram) === currentNgramClean));
-            }
+            const ngramData = this.ngramMap.get(currentNgramClean);
+            if (!ngramData) break;
+            const selectedVariation = ngramData.get(currentNgram) ?? randomChoiceFromMap(ngramData);
+            if (!selectedVariation) break;
 
-            const nextNgram: string = randomChoice(resultsExact || resultsSimilar);
-
-            const possibleNextTokens = this.ngramMap.get(nextNgram);
-            if (!possibleNextTokens) break;
-            output.push(randomChoice(possibleNextTokens));
-
-            // prevent duplicates for this generation
-            removeArrayItemIfPresent(ngramValues, nextNgram);
-
-            // new ngram for next iteration of loop
+            // choose a random next word and reassign current ngram
+            output.push(randomChoice(selectedVariation));
             currentNgram = getNLastItems(output, this.n);
-            console.log(`ciaran — generate — currentNgram::`, currentNgram);
         }
 
-        return output.join(' ');
+        return output.join(' ').substring(0, DISCORD_MAX_MESSAGE_LENGTH);
     }
 };
